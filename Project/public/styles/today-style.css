@@ -1,0 +1,62 @@
+.container{
+    width: 100%;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #C08261, #af5b2e);
+    padding:10px
+}
+.todo-app{
+    width: 100%;
+    max-width: 540px;
+    background: #fff;
+    margin:100px auto 20px;
+    padding: 40px 30px 70px;
+    border-radius: 10px;
+}
+.todo-app h2{
+    color: #002765;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.todo-app h2 img{
+    width:30px;
+    margin-left: 10px;
+}
+
+.row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: peachpuff;
+    border-radius: 30px;
+    padding-left: 20px;
+    margin-bottom: 25px;
+}
+input{
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 10px;
+}
+button{
+    border: none;
+    outline: none;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50px;
+    padding: 16px 50px;
+    background: orange;
+    color: white;
+
+}
+#displayData {
+    font-size: 16px; 
+    font-weight: bold;
+    color: #333; 
+    background-color: #FFBB5C;
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
+}
+

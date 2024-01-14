@@ -1,126 +1,97 @@
 import express from "express";
 import bodyParser from "body-parser";
 import pg from "pg";
+import dotenv from "dotenv";
 
+dotenv.config();
 const app = express();
 const port = 3000;
 
+// Create a PostgreSQL client and connect to the database
 const db = new pg.Client({
   user: "postgres",
   host: "localhost",
-  database: "firstdatabase",
-  password: "Webdev@123",
+  database: process.env.DB_DATABASE,
+  password: process.env.DB_PASSWORD,
   port: 5432,
 });
-db.connect();
+db.connect(); // Connect to the database
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static("public"));
+// Middleware setup
+app.use(bodyParser.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(express.static("public")); // Serve static files from the "public" directory
 
-
-async function checkId() {
-  const result = await db.query("SELECT id FROM users");
-  let currentUserId = result.rows; 
-  return currentUserId;
-};
-
-
-
-async function checkUsers() {
-  const result = await db.query("SELECT * FROM users");
-  const users = result.rows;
-  return users;
-};
-
-async function checkVisisted() {
+// Function to check visited countries
+async function checkVisited() {
+  // Query the database to get a list of visited country codes
   const result = await db.query("SELECT country_code FROM visited_countries");
+
+  // Extract country codes from the result and return them in an array
   let countries = [];
   result.rows.forEach((country) => {
     countries.push(country.country_code);
   });
   return countries;
-};
+}
 
+// GET home page
 app.get("/", async (req, res) => {
-  const countries = await checkVisisted();
-  const users = await checkUsers();
-  res.render("index.ejs", {
-    countries: countries,
-    total: countries.length,
-    users: users,
-    color: "teal",
-  });
+  // Retrieve the list of visited countries
+  const countries = await checkVisited();
+
+  // Render the "index.ejs" template with the list of visited countries
+  res.render("index.ejs", { countries: countries, total: countries.length });
 });
 
-
+// INSERT new country
 app.post("/add", async (req, res) => {
+  // Extract the input country from the request body
   const input = req.body["country"];
+
   try {
+    // Query the database to check if the country name exists
     const result = await db.query(
       "SELECT country_code FROM countries WHERE LOWER(country_name) LIKE '%' || $1 || '%';",
       [input.toLowerCase()]
     );
 
+    // Extract the country code from the result
     const data = result.rows[0];
     const countryCode = data.country_code;
+
     try {
-      await db.query(
-        "INSERT INTO visited_countries (country_code) VALUES ($1)",
-        [countryCode]
-      );
+      // Insert the country code into the visited_countries table
+      await db.query("INSERT INTO visited_countries (country_code) VALUES ($1)", [
+        countryCode,
+      ]);
+
+      // Redirect to the home page after successful insertion
       res.redirect("/");
     } catch (err) {
       console.log(err);
+
+      // Handle the case where the country has already been added
+      const countries = await checkVisited();
+      res.render("index.ejs", {
+        countries: countries,
+        total: countries.length,
+        error: "Country has already been added, try again.",
+      });
     }
   } catch (err) {
     console.log(err);
+
+    // Handle the case where the country name does not exist
+    const countries = await checkVisited();
+    res.render("index.ejs", {
+      countries: countries,
+      total: countries.length,
+      error: "Country name does not exist, try again.",
+    });
   }
 });
 
-
-app.post("/user", async (req, res) => {
-  const currentUserId = req.body["user"];
-  if (users.find(user => user.id === parseInt(currentUserId))) {
-    
-    
-  } else {
-    
-  }
-  const selectedUser = users.find(user => user.id === parseInt(currentUserId));
-  //user with the specified id is found, this line redirects the client to a new URL with a query parameter named "userId" containing the selected user's id.
-  res.redirect(`/?userId=${selectedUser.id}`);
-
-});
-
-
-app.post("/new" , async (req, res) => {
-  // Replace with the actual column names
-  const name = req.body.name; 
-  // Replace with the corresponding values
-  const selectedColor = req.body.color; 
-  try {
-    await db.query(
-      "INSERT INTO users (name, color) VALUES ($1, $2) RETURNING *;",
-      [name, selectedColor]
-    );
-    res.render("new.ejs");
-    
-  } catch (error) {
-    console.log(error);
-    
-  }
-  //Hint: The RETURNING keyword can return the data that was inserted.
-  //https://www.postgresql.org/docs/current/dml-returning.html
-});
-
-
-
-app.post("/add", async (req, res) => {
-
-});
-
+// Start the server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
-
-
